@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "/pkg/auth.v1;auth_v1";
+
+service Auth {
+  rpc Create (CreateRequest) returns (CreateResponse);
+  rpc Get (GetRequest) returns (GetResponse);
+  rpc IsAdmin (IsAdminRequest) returns (IsAdminResponse);
+}
+
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  USER = 1;
+  ADMIN = 2;
+}
+
+message CreateRequest {
+  string name = 1; //name of the user to register
+  string email = 2; //email of the user to register
+  string password = 3; //password of the user to register
+  string password_confirm = 4; //confirm password of the user to register
+  Role role = 5;
+}
+
+message CreateResponse {
+  int64 id = 1; //user ID of the registered user
+}
+
+message GetRequest {
+  string email = 1; //email of the user to login
+  string password = 2; //password of the user to login
+  int32 app_id = 3; //ID of the app to login to
+}
+
+message GetResponse {
+  string token = 1; //auth jwt token of the logged in user.
+}
+
+message IsAdminRequest {
+  int64 user_id = 1; //User ID to validate
+}
+
+message IsAdminResponse {
+  bool is_admin = 1; //Indicates whether the user is an admin
+}
