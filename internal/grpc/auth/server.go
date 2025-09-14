@@ -15,7 +15,7 @@ func Register(gRPC *grpc.Server) {
 }
 
 func (s *serverApi) Get(ctx context.Context, req *auth_v1.GetRequest) (*auth_v1.GetResponse, error) {
-	panic("implement me")
+	return &auth_v1.GetResponse{Token: req.GetEmail()}, nil
 }
 
 func (s *serverApi) Create(ctx context.Context, req *auth_v1.CreateRequest) (*auth_v1.CreateResponse, error) {

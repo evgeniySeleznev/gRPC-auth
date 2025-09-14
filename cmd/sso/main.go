@@ -6,6 +6,8 @@ import (
 	"github.com/evgeniySeleznev/gRPC-auth/internal/lib/logger/handlers/slogpretty"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 const (
@@ -14,6 +16,8 @@ const (
 	envProd  = "prod"
 )
 
+// запуск с локальным конфигом
+// go run cmd/sso/main.go --config=./config/local.yaml
 func main() {
 
 	cfg := config.MustLoad()
@@ -24,11 +28,21 @@ func main() {
 
 	application := app.New(log, cfg.GRPC.Port, cfg.StoragePath, cfg.TokenTTL)
 
-	application.GRPCSrv.MustRun()
-	
+	go application.GRPCSrv.MustRun()
+
 	//TODO: инициализировать приложение (app)
 
 	//TODO: запустить gRPC-сервер приложения (run app)
+
+	//Gracefull Shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+
+	signalStop := <-stop
+	log.Info("stopping application", slog.String("signal", signalStop.String()))
+	
+	application.GRPCSrv.Stop()
+	log.Info("application stopped")
 }
 
 func setupLogger(env string) *slog.Logger {
