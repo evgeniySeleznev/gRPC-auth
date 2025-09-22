@@ -2,6 +2,9 @@ package auth
 
 import (
 	"context"
+	"errors"
+	"github.com/evgeniySeleznev/gRPC-auth/internal/services/auth"
+	"github.com/evgeniySeleznev/gRPC-auth/internal/storage"
 	auth_v1 "github.com/evgeniySeleznev/gRPC-auth/pkg/authV1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -40,7 +43,10 @@ func (s *serverApi) Get(ctx context.Context, req *auth_v1.GetRequest) (*auth_v1.
 
 	token, err := s.auth.Get(ctx, req.GetEmail(), req.GetPassword(), req.GetAppId())
 	if err != nil {
-		// TODO: обработка в зависимости от ошибки
+		if errors.Is(err, auth.ErrInvalidCredentials) {
+			return nil, status.Error(codes.InvalidArgument, "wrong credentials")
+		}
+
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
@@ -54,7 +60,10 @@ func (s *serverApi) Create(ctx context.Context, req *auth_v1.CreateRequest) (*au
 
 	userID, err := s.auth.RegisterNewUser(ctx, req.GetEmail(), req.GetPassword())
 	if err != nil {
-		// TODO: проверить ошибку пользователя — что не internal ошибка
+		if errors.Is(err, storage.ErrUserExists) {
+			return nil, status.Error(codes.AlreadyExists, "user already exists")
+		}
+
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
@@ -70,8 +79,10 @@ func (s *serverApi) IsAdmin(ctx context.Context, req *auth_v1.IsAdminRequest) (*
 
 	isAdmin, err := s.auth.IsAdmin(ctx, req.GetUserId())
 	if err != nil {
+		if errors.Is(err, storage.ErrUserNotFound) {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
 
-		// TODO: проверить верно ли всё юзер ввёл
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 

@@ -64,7 +64,7 @@ func New(
 //
 // If user exists, but password is incorrect, returns error.
 // If user doesn't exist, returns error
-func (a *Auth) Get(ctx context.Context, email, password string, appID int) (string, error) {
+func (a *Auth) Get(ctx context.Context, email, password string, appID int32) (string, error) {
 	const op = "auth.Get"
 
 	log := a.log.With(
@@ -93,7 +93,7 @@ func (a *Auth) Get(ctx context.Context, email, password string, appID int) (stri
 		return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 	}
 
-	app, err := a.appProvider.App(ctx, appID)
+	app, err := a.appProvider.App(ctx, int64(appID))
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
