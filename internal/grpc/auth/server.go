@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"github.com/evgeniySeleznev/gRPC-auth/internal/services/auth"
-	"github.com/evgeniySeleznev/gRPC-auth/internal/storage"
 	auth_v1 "github.com/evgeniySeleznev/gRPC-auth/pkg/authV1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -44,7 +43,7 @@ func (s *serverApi) Get(ctx context.Context, req *auth_v1.GetRequest) (*auth_v1.
 	token, err := s.auth.Get(ctx, req.GetEmail(), req.GetPassword(), req.GetAppId())
 	if err != nil {
 		if errors.Is(err, auth.ErrInvalidCredentials) {
-			return nil, status.Error(codes.InvalidArgument, "wrong credentials")
+			return nil, status.Error(codes.InvalidArgument, "invalid email or password")
 		}
 
 		return nil, status.Error(codes.Internal, "internal error")
@@ -60,7 +59,7 @@ func (s *serverApi) Create(ctx context.Context, req *auth_v1.CreateRequest) (*au
 
 	userID, err := s.auth.RegisterNewUser(ctx, req.GetEmail(), req.GetPassword())
 	if err != nil {
-		if errors.Is(err, storage.ErrUserExists) {
+		if errors.Is(err, auth.ErrUserExists) {
 			return nil, status.Error(codes.AlreadyExists, "user already exists")
 		}
 
@@ -79,7 +78,7 @@ func (s *serverApi) IsAdmin(ctx context.Context, req *auth_v1.IsAdminRequest) (*
 
 	isAdmin, err := s.auth.IsAdmin(ctx, req.GetUserId())
 	if err != nil {
-		if errors.Is(err, storage.ErrUserNotFound) {
+		if errors.Is(err, auth.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
 
@@ -92,7 +91,7 @@ func (s *serverApi) IsAdmin(ctx context.Context, req *auth_v1.IsAdminRequest) (*
 // валидация логина
 func validateLogin(req *auth_v1.GetRequest) error {
 	if req.GetEmail() == "" {
-		return status.Error(codes.InvalidArgument, "email missing")
+		return status.Error(codes.InvalidArgument, "email is required")
 	}
 
 	if req.GetPassword() == "" {
@@ -109,7 +108,7 @@ func validateLogin(req *auth_v1.GetRequest) error {
 // валидация регистрации
 func validateLRegister(req *auth_v1.CreateRequest) error {
 	if req.GetEmail() == "" {
-		return status.Error(codes.InvalidArgument, "email missing")
+		return status.Error(codes.InvalidArgument, "email is required")
 	}
 
 	if req.GetPassword() == "" {
